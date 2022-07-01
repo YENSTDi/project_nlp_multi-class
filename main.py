@@ -160,7 +160,7 @@ for epoch in range(EPOCH):
       print(index, running_loss)
 
       with open('log.txt', 'a+') as f:
-        ls = 'epoch: {epoch}\t{running_loss}\n'
+        ls = f'epoch: {epoch}\t{running_loss}\n'
         f.write(ls)
     
     
