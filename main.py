@@ -9,7 +9,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 
 from transformers.modeling_outputs import TokenClassifierOutput
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, AutoModel
+from transformers import AutoModelForSequenceClassification, AutoTokenizer, AutoModel, PreTrainedModel
 from sklearn.metrics import accuracy_score
 
 class MainData(Dataset):
@@ -55,7 +55,7 @@ def create_batch(datas):
     return input_ids_tensors, token_type_ids_tensors, masks_tensors, labels
     
 
-class OurModel(nn.Module):
+class OurModel(PreTrainedModel):
   def __init__(self, ori_model, num_labels):
     super(OurModel, self).__init__()
     self.num_labels = num_labels
@@ -174,5 +174,5 @@ cost_time = end - start
 print('training time', cost_time)
 
 
-model.save_pretrained("suicide_predtion_model")
-tokenizer.save_pretrained("suicide_predtion_token")
+model.save_pretrained("multi-class-model")
+tokenizer.save_pretrained("multi-class-token")
