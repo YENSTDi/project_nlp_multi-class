@@ -127,7 +127,7 @@ model = OurModel(AutoModel.from_pretrained(NAME), 32)
 tokenizer = AutoTokenizer.from_pretrained(NAME)
 
 train_set = MainData(df, tokenizer)
-train_loader = DataLoader(train_set, shuffle=False, batch_size=16, collate_fn=create_batch)
+train_loader = DataLoader(train_set, shuffle=False, batch_size=8, collate_fn=create_batch)
 
 val_set = MainData(val_df, tokenizer)
 val_loader = DataLoader(val_set, shuffle=False, batch_size=8, collate_fn=create_batch)
