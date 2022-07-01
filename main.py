@@ -141,16 +141,21 @@ for epoch in range(EPOCH):
     bts = 0
     print('-'*50)
     for index, data in enumerate(train_loader):
-        input_id, mark, sgement_id, label = [t.to(device) for t in data]
-        optimizer.zero_grad()
+      input_id, mark, sgement_id, label = [t.to(device) for t in data]
+      optimizer.zero_grad()
 
-        output = model(input_id, mark, label)
-        l = output[0]
-        l.backward()
-        optimizer.step()
-        running_loss+=l.item()
-        bts+=len(data)
-        print(index, running_loss)
+      output = model(input_id, mark, label)
+      l = output[0]
+      l.backward()
+      optimizer.step()
+      running_loss+=l.item()
+      bts+=len(data)
+      print(index, running_loss)
+
+      with open('log.txt', 'a+') as f:
+        ls = 'epoch: {epoch}\t{running_loss}\n'
+        f.write(ls)
+    
     
 
     avg_loss = running_loss/bts
@@ -159,7 +164,10 @@ for epoch in range(EPOCH):
     val_acc = eval(model, val_loader)
     print(f'val_acc: {val_acc}')
     print('-'*50)
-    
+
+    with open('log.txt', 'a+') as f:
+      ls = f"----\nepoch_{epoch}_loss: {avg_loss}\nval_acc: {val_acc}\n----\n"
+      f.write(ls)
 
 end = time.time()
 cost_time = end - start
