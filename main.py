@@ -55,7 +55,7 @@ def create_batch(datas):
     return input_ids_tensors, token_type_ids_tensors, masks_tensors, labels
     
 
-class OurModel(PreTrainedModel):
+class OurModel(nn.Module):
   def __init__(self, ori_model, num_labels):
     super(OurModel, self).__init__()
     self.num_labels = num_labels
@@ -112,6 +112,13 @@ def eval(model, data_loader):
 
   return acc
 
+
+def save(model, optimizer):
+  torch.save({
+      'model_state_dict': model.state_dict(),
+      'optimizer_state_dict': optimizer.state_dict()
+  }, 'multi-class-model-2')
+
 df = pd.read_csv('data_3000.csv')
 val_df = pd.read_csv('testdata.csv')
 
@@ -160,19 +167,25 @@ for epoch in range(EPOCH):
 
     avg_loss = running_loss/bts
     print(epoch, avg_loss)
-    loss_list.append(avg_loss)
-    val_acc = eval(model, val_loader)
-    print(f'val_acc: {val_acc}')
+    # loss_list.append(avg_loss)
+    # val_acc = eval(model, val_loader)
+    # print(f'val_acc: {val_acc}')
     print('-'*50)
 
     with open('log.txt', 'a+') as f:
-      ls = f"----\nepoch_{epoch}_loss: {avg_loss}\nval_acc: {val_acc}\n----\n"
+      ls = f"----\nepoch_{epoch}_loss: {avg_loss}\nval_acc: -\n----\n"
       f.write(ls)
 
 end = time.time()
 cost_time = end - start
 print('training time', cost_time)
+with open('log.txt', 'a+') as f:
+  f.write(f"cost time: {cost_time}")
 
+training_acc = eval(model, train_loader)
+val_acc = eval(model, val_loader)
+with open('log.txt', 'a+') as f:
+  f.write(f"training acc: {training_acc}\n")
+  f.write(f"val acc: {val_acc}\n")
 
-model.save_pretrained("multi-class-model")
-tokenizer.save_pretrained("multi-class-token")
+save(model, optimizer)
