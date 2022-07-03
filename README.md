@@ -10,7 +10,7 @@ Colab
 
 ## 預訓練模型
 
-https://huggingface.co/uer/roberta-base-finetuned-jd-full-chinese
+<https://huggingface.co/uer/roberta-base-finetuned-jd-full-chinese>
 
 ## 模型參數
 
