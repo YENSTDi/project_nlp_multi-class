@@ -1,6 +1,6 @@
 import pandas as pd
 import torch
-from torch import logit, nn
+from torch import nn
 from transformers.modeling_outputs import TokenClassifierOutput
 from transformers import AutoModel, AutoTokenizer
 

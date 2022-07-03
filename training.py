@@ -1,5 +1,6 @@
 import pandas as pd
 import time
+import sys
 
 import torch
 from torch.utils.data import Dataset
@@ -9,10 +10,10 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 
 from transformers.modeling_outputs import TokenClassifierOutput
-from transformers import AutoTokenizer, AutoModel, PreTrainedModel
+from transformers import AutoTokenizer, AutoModel
 from sklearn.metrics import accuracy_score
 
-
+# 使用torch的Dataset
 class MainData(Dataset):
     def __init__(self, df, tokenizer) -> None:
         super().__init__()
@@ -36,7 +37,7 @@ class MainData(Dataset):
     def __len__(self):
         return len(self.df)
 
-
+# 方便DataLoader取batch資料
 def create_batch(datas):
     input_ids = [torch.Tensor(i[0]) for i in datas]
     token_type_ids = [torch.Tensor(i[1])for i in datas]
@@ -57,7 +58,7 @@ def create_batch(datas):
 
     return input_ids_tensors, token_type_ids_tensors, masks_tensors, labels
 
-
+# 更改原fine-turning模型
 class OurModel(nn.Module):
     def __init__(self, ori_model, num_labels):
         super(OurModel, self).__init__()
@@ -79,7 +80,7 @@ class OurModel(nn.Module):
             loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
         return TokenClassifierOutput(loss=loss, logits=logits, hidden_states=outputs.hidden_states, attentions=outputs.attentions)
 
-
+# 評估模型
 def eval(model, data_loader):
     loss = 0
     model.eval()
@@ -118,7 +119,7 @@ def eval(model, data_loader):
 
     return acc, loss
 
-
+# 儲存模型
 def save(model, optimizer):
     torch.save({
         'model_state_dict': model.state_dict(),
@@ -126,13 +127,16 @@ def save(model, optimizer):
     }, 'multi-class-model-2')
 
 
+# 讀取訓練和驗證資料
 df = pd.read_csv('data_3000.csv')
 val_df = pd.read_csv('testdata.csv')
 
+# 載入模型以及tokenizer
 NAME = "uer/roberta-base-finetuned-jd-full-chinese"
 model = OurModel(AutoModel.from_pretrained(NAME), 32)
 tokenizer = AutoTokenizer.from_pretrained(NAME)
 
+# 準備DataLoader
 train_set = MainData(df, tokenizer)
 train_loader = DataLoader(train_set, shuffle=False,
                           batch_size=16, collate_fn=create_batch)
@@ -141,24 +145,24 @@ val_set = MainData(val_df, tokenizer)
 val_loader = DataLoader(val_set, shuffle=False,
                         batch_size=8, collate_fn=create_batch)
 
-
+# 模型超參數設定
 device = 'cuda'
 optimizer = Adam(model.parameters(), lr=5e-5)
 loss = nn.BCELoss()
 EPOCH = 10
 
+# 模型開始訓練-----
 model = model.to(device)
 model.train()
 
-optimizer = Adam(model.parameters(), lr=5e-5)
+## 儲存Loss和Acc用
 Train_Loss = []
 Val_Loss = []
 Train_Acc = []
 Val_Acc = []
-EPOCH = 10
+## 紀錄訓練時間
 start = time.time()
 for epoch in range(EPOCH):
-    # running_loss = 0.0
     bts = 0
     for index, data in enumerate(train_loader):
         input_id, mark, sgement_id, label = [t.to(device) for t in data]
@@ -168,16 +172,12 @@ for epoch in range(EPOCH):
         l = output[0]
         l.backward()
         optimizer.step()
-        # running_loss+=l.item()
         bts += 1
         stats = 'Epoch [%d/%d], Step [%d/%d], Batch-Loss: %.4f' % (
             epoch+1, EPOCH, bts, len(train_loader), l.item())
         print('\r' + stats, end="")
-    #   sys.stdout.flush()
+        sys.stdout.flush()
 
-    # avg_loss = running_loss/bts
-
-    # loss_list.append(avg_loss)
     train_acc, train_loss = eval(model, train_loader)
     val_acc, val_loss = eval(model, val_loader)
     Train_Loss.append(train_loss)
@@ -196,11 +196,16 @@ cost_time = end - start
 print('training time', cost_time)
 with open('log.txt', 'a+') as f:
     f.write(f"cost time: {cost_time}")
+# 訓練完成-----
 
+# 評估訓練、驗證準確度和loss值
 training_acc = eval(model, train_loader)
 val_acc = eval(model, val_loader)
+
+# 紀錄log
 with open('log.txt', 'a+') as f:
     f.write(f"training acc: {training_acc}\n")
     f.write(f"val acc: {val_acc}\n")
 
+# 儲存模型
 save(model, optimizer)
